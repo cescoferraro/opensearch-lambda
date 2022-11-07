@@ -9,23 +9,45 @@ terraform {
   required_version = ">= 1.2"
 }
 
-provider "aws" {
-  region = "us-east-2"
+variable "domain" {
+  default = "terraform-open-search"
 }
-resource "aws_security_group" "main" {
-  egress = [
-    {
-      cidr_blocks      = ["0.0.0.0/0",]
-      description      = ""
-      from_port        = 0
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "-1"
-      security_groups  = []
-      self             = false
-      to_port          = 0
-    }
-  ]
+
+variable "region" {
+  default = "us-east-2"
+}
+
+provider "aws" {
+  region = var.region
+}
+
+resource "aws_default_vpc" "default" { }
+
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_default_vpc.default.id
+  ingress {
+    protocol  = -1
+    self      = true
+    from_port = 0
+    to_port   = 0
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+}
+resource "aws_security_group" "app_server_security_group" {
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
   ingress = [
     {
       cidr_blocks      = ["0.0.0.0/0",]
@@ -39,6 +61,10 @@ resource "aws_security_group" "main" {
       to_port          = 60000
     }
   ]
+}
+
+resource "aws_default_subnet" "default" {
+  availability_zone = "${var.region}a"
 }
 
 resource "aws_iam_policy" "policy" {
@@ -87,9 +113,6 @@ resource "aws_iam_instance_profile" "test_profile" {
 }
 
 
-variable "domain" {
-  default = "serverless-open-search"
-}
 
 data "aws_region" "current" {}
 
@@ -155,13 +178,56 @@ POLICY
 }
 
 
-resource "aws_default_vpc" "default" { }
+
+
+resource "aws_ssm_parameter" "vpcId" {
+  name        = "/default/vpc_id"
+  description = "VPC IP"
+  type        = "String"
+  value       = aws_default_vpc.default.id
+}
+output "VPC_ID" {
+  value = aws_default_vpc.default.id
+}
+
+resource "aws_ssm_parameter" "subnetId" {
+  name        = "/default/subnet_id"
+  description = "SUBNET ID"
+  type        = "String"
+  value       = aws_default_subnet.default.id
+}
+output "SUBNET_ID" {
+  value = aws_default_subnet.default.id
+}
+
+resource "aws_ssm_parameter" "securityGroupId" {
+  name        = "/default/security_group"
+  description = "Security Group ID"
+  type        = "String"
+  value       = aws_default_security_group.default.id
+}
+output "SECURITY_GROUP_ID" {
+  value = aws_default_security_group.default.id
+}
+
+resource "aws_ssm_parameter" "ec2SecurityGroupId" {
+  name        = "/ec2/security_group"
+  description = "EC2 Security Group ID"
+  type        = "String"
+  value       = aws_security_group.app_server_security_group.id
+}
+
+output "EC2_SECURITY_GROUP_ID" {
+  value = aws_security_group.app_server_security_group.id
+}
+
+
 # Ec2
 resource "aws_instance" "shared_infra" {
   ami                    = "ami-089a545a9ed9893b6"
   instance_type          = "t2.large"
   key_name               = "pokemon-infra"
-  vpc_security_group_ids = [aws_security_group.main.id]
+  vpc_security_group_ids = [aws_default_security_group.default.id, aws_security_group.app_server_security_group.id]
   user_data              = file("./file.sh")
   iam_instance_profile = aws_iam_instance_profile.test_profile.name
   tags                   = {
@@ -173,6 +239,7 @@ resource "aws_instance" "shared_infra" {
   }
   depends_on = [aws_opensearch_domain.open_search]
 }
+
 ## parameters.tf
 resource "aws_ssm_parameter" "endpoint" {
   name        = "/ec2/public_ip"
@@ -180,9 +247,7 @@ resource "aws_ssm_parameter" "endpoint" {
   type        = "String"
   value       = aws_instance.shared_infra.public_ip
 }
-resource "aws_ssm_parameter" "vpcId" {
-  name        = "/ec2/public_ip"
-  description = "IP"
-  type        = "String"
-  value       = aws_default_vpc.default.id
+
+output "EC2_PUBLIC_IP" {
+  value = aws_instance.shared_infra.public_ip
 }
