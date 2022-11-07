@@ -1,0 +1,70 @@
+service: lambda-otel
+
+plugins:
+  - serverless-webpack
+
+custom:
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    includeModules: true
+  databaseName: "pokeshop"
+  databaseUsername: "ashketchum"
+  databasePassword: "squirtle123"
+  databaseEndpoint:
+    Fn::GetAtt: [PokeDatabase, "Endpoint.Address"]
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-east-2
+#  vpc:
+#    securityGroupIds:
+#      - ${ssm:/default/security_group}
+#      - ${ssm:/ec2/security_group}
+#    subnetIds:
+#      - ${ssm:/default/subnet_id}
+  environment:
+    NODE_OPTIONS: --require lambda-wrapper
+    COLLECTOR_ENDPOINT: http://${ssm:/ec2/public_ip}:4317
+    DATABASE_URL:
+      Fn::Join:
+        - ""
+        - - "postgres://"
+          - ${self:custom.databaseUsername}
+          - ":"
+          - ${self:custom.databasePassword}
+          - "@"
+          - ${self:custom.databaseEndpoint}
+          - "/"
+          - ${self:custom.databaseName}
+          - "?schema=public"
+
+
+functions:
+  minimal:
+    handler: handler.hello
+#    vpc:
+#      securityGroupIds:
+#        - ${ssm:/default/security_group}
+#        - ${ssm:/ec2/security_group}
+#      subnetIds:
+#        - ${ssm:/default/subnet_id}
+    events:
+      - httpApi:
+          path: /
+          method: get
+
+
+resources:
+  Resources:
+    PokeDatabase:
+      Type: "AWS::RDS::DBInstance"
+      Properties:
+        DBName: ${self:custom.databaseName}
+        AllocatedStorage: "5"
+        PubliclyAccessible: true
+        DBInstanceClass: "db.t3.micro"
+        Engine: "Postgres"
+        MasterUsername: ${self:custom.databaseUsername}
+        MasterUserPassword: ${self:custom.databasePassword}
+

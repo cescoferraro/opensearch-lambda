@@ -1,0 +1,38 @@
+{
+  "name": "infra",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.ts",
+  "dependencies": {
+    "@opentelemetry/api": "1.0.2",
+    "@opentelemetry/auto-instrumentations-node": "0.25.0",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.33.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.33.0",
+    "@opentelemetry/instrumentation": "0.25.0",
+    "@opentelemetry/instrumentation-aws-lambda": "0.25.0",
+    "@opentelemetry/instrumentation-http": "0.25.0",
+    "@opentelemetry/sdk-trace-base": "0.25.0",
+    "@opentelemetry/sdk-trace-node": "0.25.0",
+    "axios": "0.24.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "lodash": "^4.17.21",
+    "pg": "^8.8.0",
+    "reflect-metadata": "^0.1.13",
+    "sequelize": "^6.25.3",
+    "sequelize-typescript": "^2.1.5",
+    "ts-loader": "^9.4.1",
+    "tsconfig-paths-webpack-plugin": "^4.0.0",
+    "umzug": "^3.2.1",
+    "webpack-node-externals": "^3.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "webpack": "webpack"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serverless-webpack": "^5.10.0",
+    "webpack-cli": "^4.10.0"
+  }
+}
