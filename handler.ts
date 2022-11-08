@@ -1,5 +1,5 @@
-import {AllowNull, AutoIncrement, Column, Default, Model, PrimaryKey, Sequelize, Table} from "sequelize-typescript";
 import pg from "pg"
+import {AllowNull, AutoIncrement, Column, Default, Model, PrimaryKey, Sequelize, Table} from "sequelize-typescript";
 
 
 @Table({
@@ -56,8 +56,9 @@ export class SequelizePokemonRepository implements PokemonRepository {
 
 }
 
+
 export const hello = async (event) => {
-    const { DATABASE_URL = '' } = process.env;
+    const {DATABASE_URL = ''} = process.env;
 
     const sequelize = new Sequelize(DATABASE_URL, {
         dialect: 'postgres',
@@ -69,13 +70,19 @@ export const hello = async (event) => {
     });
 
     sequelize.addModels([PokemonModel]);
+
+    const repository = new SequelizePokemonRepository();
+    const totalCount = await repository.count()
     await sequelize.authenticate()
     return {
         statusCode: 200,
         body: JSON.stringify(
             {
                 message: 'Some Message Here',
-                input: event,
+                input: {
+                    ...event,
+                    count: totalCount
+                },
             },
             null,
             2

@@ -63,9 +63,14 @@ resource "aws_security_group" "app_server_security_group" {
   ]
 }
 
-resource "aws_default_subnet" "default" {
+resource "aws_default_subnet" "default_a" {
   availability_zone = "${var.region}a"
-
+}
+resource "aws_default_subnet" "default_b" {
+  availability_zone = "${var.region}c"
+}
+resource "aws_default_subnet" "default_c" {
+  availability_zone = "${var.region}c"
 }
 
 resource "aws_iam_policy" "policy" {
@@ -130,7 +135,7 @@ resource "aws_opensearch_domain" "open_search" {
 
   vpc_options {
     security_group_ids = [aws_default_security_group.default.id]
-    subnet_ids = [aws_default_subnet.default.id]
+    subnet_ids = [aws_default_subnet.default_a.id]
   }
   cluster_config {
     instance_type = "m4.large.search"
@@ -199,10 +204,10 @@ resource "aws_ssm_parameter" "subnetId" {
   name        = "/default/subnet_id"
   description = "SUBNET ID"
   type        = "String"
-  value       = aws_default_subnet.default.id
+  value       = aws_default_subnet.default_a.id
 }
 output "SUBNET_ID" {
-  value = aws_default_subnet.default.id
+  value = aws_default_subnet.default_a.id
 }
 
 resource "aws_ssm_parameter" "securityGroupId" {
@@ -243,17 +248,28 @@ resource "aws_instance" "shared_infra" {
   }
   depends_on = [aws_opensearch_domain.open_search]
   vpc_security_group_ids = [aws_default_security_group.default.id, aws_security_group.app_server_security_group.id]
-  subnet_id = aws_default_subnet.default.id
+  subnet_id = aws_default_subnet.default_a.id
 }
 
 ## parameters.tf
 resource "aws_ssm_parameter" "endpoint" {
-  name        = "/ec2/public_ip"
-  description = "Ec2 instance public IP"
+  name        = "/ec2/private_ip"
+  description = "Ec2 instance private IP"
   type        = "String"
-  value       = aws_instance.shared_infra.public_ip
+  value       = aws_instance.shared_infra.private_ip
 }
 
 output "EC2_PUBLIC_IP" {
-  value = aws_instance.shared_infra.public_ip
+  value = aws_instance.shared_infra.private_ip
+}
+## parameters.tf
+resource "aws_ssm_parameter" "dns_name" {
+  name        = "/ec2/dns_name"
+  description = "Ec2 instance public IP"
+  type        = "String"
+  value       = aws_instance.shared_infra.private_dns
+}
+
+output "EC2_DNS_NAME" {
+  value = aws_instance.shared_infra.private_dns
 }

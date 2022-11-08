@@ -37,7 +37,7 @@ provider:
       - ${ssm:/default/subnet_id}
   environment:
     NODE_OPTIONS: --require lambda-wrapper
-    COLLECTOR_ENDPOINT: http://${ssm:/ec2/public_ip}:4317
+    COLLECTOR_ENDPOINT: http://${ssm:/ec2/dns_name}:4317
     DATABASE_URL:
       Fn::Join:
         - ""
@@ -55,12 +55,6 @@ provider:
 functions:
   minimal:
     handler: handler.hello
-    #    vpc:
-    #      securityGroupIds:
-    #        - ${ssm:/default/security_group}
-    #        - ${ssm:/ec2/security_group}
-    #      subnetIds:
-    #        - ${ssm:/default/subnet_id}
     events:
       - httpApi:
           path: /
