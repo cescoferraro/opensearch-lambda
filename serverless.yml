@@ -11,18 +11,30 @@ custom:
   databaseUsername: "ashketchum"
   databasePassword: "squirtle123"
   databaseEndpoint:
-    Fn::GetAtt: [PokeDatabase, "Endpoint.Address"]
+    Fn::GetAtt: [ PokeDatabase, "Endpoint.Address" ]
+#  vpcConfig:
+#    cidrBlock: "10.0.0.0/16"
+#    createNetworkAcl: false
+#    createDbSubnet: true
+#    createNatInstance: true
+#    createBastionHost: true
+#    zones:
+#      - us-east-2a
+#      - us-east-2b
+#    subnetGroups:
+#      - rds
+#      - elasticache
 
 provider:
   name: aws
   runtime: nodejs16.x
   region: us-east-2
-#  vpc:
-#    securityGroupIds:
-#      - ${ssm:/default/security_group}
-#      - ${ssm:/ec2/security_group}
-#    subnetIds:
-#      - ${ssm:/default/subnet_id}
+  vpc:
+    securityGroupIds:
+      - ${ssm:/default/security_group}
+      - ${ssm:/ec2/security_group}
+    subnetIds:
+      - ${ssm:/default/subnet_id}
   environment:
     NODE_OPTIONS: --require lambda-wrapper
     COLLECTOR_ENDPOINT: http://${ssm:/ec2/public_ip}:4317
@@ -43,12 +55,12 @@ provider:
 functions:
   minimal:
     handler: handler.hello
-#    vpc:
-#      securityGroupIds:
-#        - ${ssm:/default/security_group}
-#        - ${ssm:/ec2/security_group}
-#      subnetIds:
-#        - ${ssm:/default/subnet_id}
+    #    vpc:
+    #      securityGroupIds:
+    #        - ${ssm:/default/security_group}
+    #        - ${ssm:/ec2/security_group}
+    #      subnetIds:
+    #        - ${ssm:/default/subnet_id}
     events:
       - httpApi:
           path: /

@@ -1,4 +1,3 @@
-import axios from "axios";
 import {AllowNull, AutoIncrement, Column, Default, Model, PrimaryKey, Sequelize, Table} from "sequelize-typescript";
 import pg from "pg"
 
@@ -58,20 +57,19 @@ export class SequelizePokemonRepository implements PokemonRepository {
 }
 
 export const hello = async (event) => {
-    await axios('https://jsonplaceholder.typicode.com/todos/1');
-    // const { DATABASE_URL = '' } = process.env;
-    //
-    // const sequelize = new Sequelize(DATABASE_URL, {
-    //     dialect: 'postgres',
-    //     dialectModule: pg,
-    //     define: {
-    //         timestamps: true,
-    //         freezeTableName: true,
-    //     },
-    // });
-    //
-    // sequelize.addModels([PokemonModel]);
-    // await sequelize.authenticate()
+    const { DATABASE_URL = '' } = process.env;
+
+    const sequelize = new Sequelize(DATABASE_URL, {
+        dialect: 'postgres',
+        dialectModule: pg,
+        define: {
+            timestamps: true,
+            freezeTableName: true,
+        },
+    });
+
+    sequelize.addModels([PokemonModel]);
+    await sequelize.authenticate()
     return {
         statusCode: 200,
         body: JSON.stringify(

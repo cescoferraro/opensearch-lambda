@@ -6,8 +6,12 @@ const {getNodeAutoInstrumentations} = require("@opentelemetry/auto-instrumentati
 const {OTLPTraceExporter} = require('@opentelemetry/exporter-trace-otlp-grpc');
 
 
+const url = process.env.COLLECTOR_ENDPOINT;
+console.log("===========================");
+console.log(url);
+
 const collectorOptions = {
-    url: process.env.COLLECTOR_ENDPOINT,
+    url: url,
 };
 
 

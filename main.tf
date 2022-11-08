@@ -27,7 +27,7 @@ resource "aws_default_security_group" "default" {
   vpc_id = aws_default_vpc.default.id
   ingress {
     protocol  = -1
-    self      = true
+    cidr_blocks = ["0.0.0.0/0"]
     from_port = 0
     to_port   = 0
   }
@@ -38,8 +38,8 @@ resource "aws_default_security_group" "default" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
 }
+
 resource "aws_security_group" "app_server_security_group" {
   egress {
     from_port        = 0
@@ -65,6 +65,7 @@ resource "aws_security_group" "app_server_security_group" {
 
 resource "aws_default_subnet" "default" {
   availability_zone = "${var.region}a"
+
 }
 
 resource "aws_iam_policy" "policy" {
@@ -127,6 +128,10 @@ resource "aws_opensearch_domain" "open_search" {
     volume_size = 10
   }
 
+  vpc_options {
+    security_group_ids = [aws_default_security_group.default.id]
+    subnet_ids = [aws_default_subnet.default.id]
+  }
   cluster_config {
     instance_type = "m4.large.search"
 
@@ -227,7 +232,6 @@ resource "aws_instance" "shared_infra" {
   ami                    = "ami-089a545a9ed9893b6"
   instance_type          = "t2.large"
   key_name               = "pokemon-infra"
-  vpc_security_group_ids = [aws_default_security_group.default.id, aws_security_group.app_server_security_group.id]
   user_data              = file("./file.sh")
   iam_instance_profile = aws_iam_instance_profile.test_profile.name
   tags                   = {
@@ -238,6 +242,8 @@ resource "aws_instance" "shared_infra" {
     volume_size = 20
   }
   depends_on = [aws_opensearch_domain.open_search]
+  vpc_security_group_ids = [aws_default_security_group.default.id, aws_security_group.app_server_security_group.id]
+  subnet_id = aws_default_subnet.default.id
 }
 
 ## parameters.tf
