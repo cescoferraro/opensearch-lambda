@@ -1,3 +1,4 @@
+import axios from "axios";
 import pg from "pg"
 import {AllowNull, AutoIncrement, Column, Default, Model, PrimaryKey, Sequelize, Table} from "sequelize-typescript";
 
@@ -57,23 +58,28 @@ export class SequelizePokemonRepository implements PokemonRepository {
 }
 
 
-export const hello = async (event) => {
-    const {DATABASE_URL = ''} = process.env;
+async function testDabasePokemonCount(enabled = false) {
+    if (!enabled) return 0
+    try {
+        const todoItem = await axios(process.env.COLLECTOR_ENDPOINT || "");
+        console.log(todoItem);
+    } catch (e) {
+        console.log('error');
+        console.log(e);
+    }
 
+    const {DATABASE_URL = ''} = process.env;
     const sequelize = new Sequelize(DATABASE_URL, {
         dialect: 'postgres',
         dialectModule: pg,
-        define: {
-            timestamps: true,
-            freezeTableName: true,
-        },
+        define: { timestamps: true, freezeTableName: true, },
     });
-
     sequelize.addModels([PokemonModel]);
-
     const repository = new SequelizePokemonRepository();
-    const totalCount = await repository.count()
-    await sequelize.authenticate()
+    return await repository.count();
+}
+
+export const hello = async (event) => {
     return {
         statusCode: 200,
         body: JSON.stringify(
@@ -81,7 +87,7 @@ export const hello = async (event) => {
                 message: 'Some Message Here',
                 input: {
                     ...event,
-                    count: totalCount
+                    count: await testDabasePokemonCount(true)
                 },
             },
             null,
