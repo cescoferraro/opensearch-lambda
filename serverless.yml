@@ -55,6 +55,7 @@ provider:
 functions:
   minimal:
     handler: handler.hello
+#    vpc: ~
     events:
       - httpApi:
           path: /

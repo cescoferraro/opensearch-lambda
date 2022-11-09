@@ -87,7 +87,7 @@ export const hello = async (event) => {
                 message: 'Some Message Here',
                 input: {
                     ...event,
-                    count: await testDabasePokemonCount(true)
+                    count: await testDabasePokemonCount()
                 },
             },
             null,
